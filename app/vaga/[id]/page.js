@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
 
+// Força a página a ser dinâmica
+export const dynamic = 'force-dynamic';
+
 export default function VagaPage() {
   const { id } = useParams();
   const [vaga, setVaga] = useState(null);

@@ -2,6 +2,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 
+// Força a página a ser dinâmica
+export const dynamic = 'force-dynamic';
+
 const SENHA_ADMIN = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123';
 
 export default function Admin() {

@@ -2,6 +2,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
+// Força a página a ser dinâmica (não tenta prerender no build)
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   const [vagas, setVagas] = useState([]);
   const [busca, setBusca] = useState('');
