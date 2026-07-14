@@ -31,6 +31,16 @@ export default function VagaPage() {
     carregar();
   }, [id]);
 
+  const tiposAceitos = '.pdf,.doc,.docx,.jpg,.jpeg,.png';
+  const extensoesAceitas = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
+  const mimeTypesAceitos = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/jpeg',
+    'image/png',
+  ];
+
   async function enviar(e) {
     e.preventDefault();
     setErro('');
@@ -40,23 +50,26 @@ export default function VagaPage() {
       return;
     }
     if (!arquivo) {
-      setErro('Anexe seu currículo em PDF.');
-      return;
-    }
-    if (arquivo.type !== 'application/pdf') {
-      setErro('O currículo deve ser um arquivo PDF.');
+      setErro('Anexe seu currículo.');
       return;
     }
     if (arquivo.size > 5 * 1024 * 1024) {
       setErro('O arquivo deve ter no máximo 5MB.');
       return;
     }
+    // Valida pela extensão E pelo tipo do arquivo
+    const extensao = arquivo.name.split('.').pop().toLowerCase();
+    if (!extensoesAceitas.includes(extensao) || !mimeTypesAceitos.includes(arquivo.type)) {
+      setErro('Formato inválido. Envie um arquivo PDF, DOC, DOCX, JPG ou PNG.');
+      return;
+    }
 
     setEnviando(true);
 
     try {
-      // 1) Upload do PDF para o Storage
-      const nomeArquivo = `${Date.now()}_${nome.replace(/\s+/g, '_')}.pdf`;
+      // 1) Upload do arquivo para o Storage
+      const extensao = arquivo.name.split('.').pop().toLowerCase();
+      const nomeArquivo = `${Date.now()}_${nome.replace(/\s+/g, '_')}.${extensao}`;
       const { error: uploadErr } = await supabase.storage
         .from('curriculos')
         .upload(nomeArquivo, arquivo);
@@ -128,8 +141,8 @@ export default function VagaPage() {
           <label>E-mail *</label>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seuemail@exemplo.com" required />
 
-          <label>Currículo (PDF, máximo 5MB) *</label>
-          <input type="file" accept="application/pdf" onChange={(e) => setArquivo(e.target.files[0])} required />
+          <label>Currículo (PDF, DOC ou imagem JPG/PNG, máximo 5MB) *</label>
+          <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={(e) => setArquivo(e.target.files[0])} required />
 
           <button className="btn" type="submit" disabled={enviando}>
             {enviando ? 'Enviando...' : 'Enviar candidatura'}
