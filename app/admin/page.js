@@ -146,8 +146,34 @@ export default function Admin() {
   }
 
   async function toggleAtiva(v) {
-    await supabase.from('vagas').update({ ativa: !v.ativa }).eq('id', v.id);
-    carregarVagas();
+    const { error } = await supabase.from('vagas').update({ ativa: !v.ativa }).eq('id', v.id);
+    if (error) {
+      alert('Erro ao mudar status da vaga: ' + error.message);
+    } else {
+      carregarVagas();
+    }
+  }
+
+  async function excluirCandidatura(id) {
+    if (!confirm('Excluir esta candidatura? Esta ação não pode ser desfeita.')) return;
+    const { error } = await supabase.from('candidaturas').delete().eq('id', id);
+    if (error) {
+      alert('Erro ao excluir: ' + error.message);
+    } else {
+      carregarCandidaturas();
+    }
+  }
+
+  async function mudarStatusCandidatura(c, novoStatus) {
+    const { error } = await supabase
+      .from('candidaturas')
+      .update({ status: novoStatus })
+      .eq('id', c.id);
+    if (error) {
+      alert('Erro ao mudar status: ' + error.message);
+    } else {
+      carregarCandidaturas();
+    }
   }
 
   // Lista de candidaturas filtrada pela vaga selecionada
@@ -357,12 +383,14 @@ export default function Admin() {
                       <th>Vaga</th>
                       <th>Nome</th>
                       <th>Contato</th>
+                      <th>Status</th>
                       <th>Currículo</th>
+                      <th>Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     {candidaturasFiltradas.map((c) => (
-                      <tr key={c.id}>
+                      <tr key={c.id} style={{ background: c.status === 'contato_realizado' ? '#f0fdf4' : 'transparent' }}>
                         <td>{new Date(c.created_at).toLocaleDateString('pt-BR')}</td>
                         <td>{c.vaga_titulo || '-'}</td>
                         <td><strong>{c.nome}</strong></td>
@@ -373,7 +401,52 @@ export default function Admin() {
                           </div>
                         </td>
                         <td>
+                          {c.status === 'contato_realizado' ? (
+                            <span style={{
+                              display: 'inline-block',
+                              padding: '4px 10px',
+                              background: '#059669',
+                              color: '#fff',
+                              borderRadius: 12,
+                              fontSize: 12,
+                              fontWeight: 600
+                            }}>
+                              ✓ Contato realizado
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => mudarStatusCandidatura(c, 'contato_realizado')}
+                              className="btn"
+                              style={{ padding: '5px 10px', fontSize: 12, background: '#059669' }}
+                              title="Marcar como contato realizado"
+                            >
+                              ✓ Marcar contato
+                            </button>
+                          )}
+                        </td>
+                        <td>
                           <BotaoDownload arquivo={c.curriculo_arquivo} nome={c.nome} />
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {c.status === 'contato_realizado' ? (
+                              <button
+                                onClick={() => mudarStatusCandidatura(c, 'pendente')}
+                                className="btn btn-secondary"
+                                style={{ padding: '4px 8px', fontSize: 11 }}
+                                title="Voltar para pendente"
+                              >
+                                ↶ Reverter
+                              </button>
+                            ) : null}
+                            <button
+                              onClick={() => excluirCandidatura(c.id)}
+                              className="btn btn-danger"
+                              style={{ padding: '4px 8px', fontSize: 11 }}
+                            >
+                              🗑 Excluir
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
