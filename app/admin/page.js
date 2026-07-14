@@ -63,6 +63,7 @@ export default function Admin() {
   const [candidaturas, setCandidaturas] = useState([]);
   const [aba, setAba] = useState('vagas');
   const [editando, setEditando] = useState(null);
+  const [filtroVaga, setFiltroVaga] = useState('todas'); // filtro da aba candidaturas
 
   // Form de vaga
   const [titulo, setTitulo] = useState('');
@@ -148,6 +149,11 @@ export default function Admin() {
     await supabase.from('vagas').update({ ativa: !v.ativa }).eq('id', v.id);
     carregarVagas();
   }
+
+  // Lista de candidaturas filtrada pela vaga selecionada
+  const candidaturasFiltradas = filtroVaga === 'todas'
+    ? candidaturas
+    : candidaturas.filter((c) => c.vaga_id === filtroVaga);
 
   // =================== LOGIN ===================
   if (!logado) {
@@ -280,35 +286,96 @@ export default function Admin() {
           {candidaturas.length === 0 ? (
             <div className="empty">Nenhuma candidatura recebida ainda.</div>
           ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Vaga</th>
-                  <th>Nome</th>
-                  <th>Contato</th>
-                  <th>Currículo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {candidaturas.map((c) => (
-                  <tr key={c.id}>
-                    <td>{new Date(c.created_at).toLocaleDateString('pt-BR')}</td>
-                    <td>{c.vaga_titulo || '-'}</td>
-                    <td><strong>{c.nome}</strong></td>
-                    <td>
-                      <div style={{ fontSize: 13 }}>
-                        📧 <a href={`mailto:${c.email}`} style={{ color: '#2563eb' }}>{c.email}</a><br />
-                        📱 <a href={`https://wa.me/${c.telefone.replace(/\D/g,'')}`} target="_blank" style={{ color: '#2563eb' }}>{c.telefone}</a>
-                      </div>
-                    </td>
-                    <td>
-                      <BotaoDownload arquivo={c.curriculo_arquivo} nome={c.nome} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <>
+              {/* Filtro por vaga */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                marginBottom: 16,
+                background: '#fff',
+                padding: 14,
+                borderRadius: 10,
+                border: '1px solid #e5e7eb',
+                flexWrap: 'wrap'
+              }}>
+                <label htmlFor="filtro-vaga" style={{ marginBottom: 0, fontWeight: 600 }}>
+                  🔍 Filtrar por vaga:
+                </label>
+                <select
+                  id="filtro-vaga"
+                  value={filtroVaga}
+                  onChange={(e) => setFiltroVaga(e.target.value)}
+                  style={{
+                    flex: 1,
+                    minWidth: 220,
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid #d1d5db',
+                    fontSize: 14,
+                    marginBottom: 0
+                  }}
+                >
+                  <option value="todas">Todas as vagas ({candidaturas.length})</option>
+                  {vagas.map((v) => {
+                    const total = candidaturas.filter((c) => c.vaga_id === v.id).length;
+                    return (
+                      <option key={v.id} value={v.id}>
+                        {v.titulo} {v.local ? `— ${v.local}` : ''} ({total})
+                      </option>
+                    );
+                  })}
+                </select>
+                {filtroVaga !== 'todas' && (
+                  <button
+                    onClick={() => setFiltroVaga('todas')}
+                    className="btn btn-secondary"
+                    style={{ padding: '8px 14px', fontSize: 13 }}
+                  >
+                    ✕ Limpar filtro
+                  </button>
+                )}
+                <span style={{ color: '#6b7280', fontSize: 13 }}>
+                  {candidaturasFiltradas.length} resultado(s)
+                </span>
+              </div>
+
+              {candidaturasFiltradas.length === 0 ? (
+                <div className="empty">
+                  Nenhuma candidatura para a vaga selecionada.
+                </div>
+              ) : (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Vaga</th>
+                      <th>Nome</th>
+                      <th>Contato</th>
+                      <th>Currículo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {candidaturasFiltradas.map((c) => (
+                      <tr key={c.id}>
+                        <td>{new Date(c.created_at).toLocaleDateString('pt-BR')}</td>
+                        <td>{c.vaga_titulo || '-'}</td>
+                        <td><strong>{c.nome}</strong></td>
+                        <td>
+                          <div style={{ fontSize: 13 }}>
+                            📧 <a href={`mailto:${c.email}`} style={{ color: '#2563eb' }}>{c.email}</a><br />
+                            📱 <a href={`https://wa.me/${c.telefone.replace(/\D/g,'')}`} target="_blank" style={{ color: '#2563eb' }}>{c.telefone}</a>
+                          </div>
+                        </td>
+                        <td>
+                          <BotaoDownload arquivo={c.curriculo_arquivo} nome={c.nome} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </>
           )}
         </>
       )}
