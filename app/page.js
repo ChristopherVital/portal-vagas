@@ -16,22 +16,28 @@ export default function Home() {
         .from('vagas')
         .select('id, titulo, local, tipo, descricao, created_at')
         .eq('ativa', true)
-        .order('created_at', { ascending: false });
+        // Ordena alfabeticamente pelo título, ignorando acentos (A-Z em pt-BR)
+        .order('titulo', { ascending: true, locale: 'pt-BR' });
       if (!error) setVagas(data || []);
       setCarregando(false);
     }
     carregar();
   }, []);
 
-  const vagasFiltradas = vagas.filter((v) => {
-    const termo = busca.toLowerCase();
-    return (
-      v.titulo?.toLowerCase().includes(termo) ||
-      v.local?.toLowerCase().includes(termo) ||
-      v.tipo?.toLowerCase().includes(termo) ||
-      v.descricao?.toLowerCase().includes(termo)
+  const vagasFiltradas = vagas
+    .filter((v) => {
+      const termo = busca.toLowerCase();
+      return (
+        v.titulo?.toLowerCase().includes(termo) ||
+        v.local?.toLowerCase().includes(termo) ||
+        v.tipo?.toLowerCase().includes(termo) ||
+        v.descricao?.toLowerCase().includes(termo)
+      );
+    })
+    // Ordena alfabeticamente pelo título em pt-BR (ignora acentos e maiúsculas)
+    .sort((a, b) =>
+      a.titulo.localeCompare(b.titulo, 'pt-BR', { sensitivity: 'base' })
     );
-  });
 
   return (
     <main className="container">
