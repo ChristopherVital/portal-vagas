@@ -5,6 +5,54 @@ import { supabase } from '../../lib/supabase';
 // Força a página a ser dinâmica
 export const dynamic = 'force-dynamic';
 
+// Componente para baixar o currículo (busca URL ao clicar)
+function BotaoDownload({ arquivo, nome }) {
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState('');
+
+  async function baixar() {
+    setCarregando(true);
+    setErro('');
+    try {
+      // Tenta signed URL primeiro
+      const { data: signed, error: err1 } = await supabase.storage
+        .from('curriculos')
+        .createSignedUrl(arquivo, 60 * 60);
+
+      let url;
+      if (!err1 && signed?.signedUrl) {
+        url = signed.signedUrl;
+      } else {
+        // Fallback: public URL
+        const { data: pub } = supabase.storage.from('curriculos').getPublicUrl(arquivo);
+        url = pub.publicUrl;
+      }
+
+      if (!url) throw new Error('Não foi possível gerar o link do arquivo');
+
+      window.open(url, '_blank');
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  return (
+    <div>
+      <button
+        onClick={baixar}
+        disabled={carregando}
+        className="btn btn-secondary"
+        style={{ padding: '6px 10px', fontSize: 13 }}
+      >
+        {carregando ? '⏳ Abrindo...' : '📄 Baixar currículo'}
+      </button>
+      {erro && <div style={{ color: '#dc2626', fontSize: 11, marginTop: 4 }}>{erro}</div>}
+    </div>
+  );
+}
+
 // Senha fixa do administrador (você pode trocar aqui se quiser mudar)
 const SENHA_ADMIN = 'MinhaSenh@2026';
 
@@ -99,11 +147,6 @@ export default function Admin() {
   async function toggleAtiva(v) {
     await supabase.from('vagas').update({ ativa: !v.ativa }).eq('id', v.id);
     carregarVagas();
-  }
-
-  function urlCurriculo(arquivo) {
-    const { data } = supabase.storage.from('curriculos').getPublicUrl(arquivo);
-    return data.publicUrl;
   }
 
   // =================== LOGIN ===================
@@ -260,9 +303,7 @@ export default function Admin() {
                       </div>
                     </td>
                     <td>
-                      <a href={urlCurriculo(c.curriculo_arquivo)} target="_blank" className="btn btn-secondary" style={{ padding: '6px 10px', fontSize: 13 }}>
-                        Baixar PDF
-                      </a>
+                      <BotaoDownload arquivo={c.curriculo_arquivo} nome={c.nome} />
                     </td>
                   </tr>
                 ))}
