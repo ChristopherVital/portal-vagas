@@ -177,7 +177,12 @@ export default function Admin() {
     <main className="container">
       <div className="admin-bar">
         <h2>Painel administrativo</h2>
-        <button className="btn btn-secondary" onClick={() => setLogado(false)}>Sair</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <a href="/" className="btn btn-secondary" style={{ textDecoration: 'none' }}>
+            🏠 Voltar para o site
+          </a>
+          <button className="btn btn-secondary" onClick={() => setLogado(false)}>Sair</button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
