@@ -5,7 +5,8 @@ import { supabase } from '../../lib/supabase';
 // Força a página a ser dinâmica
 export const dynamic = 'force-dynamic';
 
-const SENHA_ADMIN = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123';
+// Senha fixa do administrador (você pode trocar aqui se quiser mudar)
+const SENHA_ADMIN = 'MinhaSenh@2026';
 
 export default function Admin() {
   const [logado, setLogado] = useState(false);
